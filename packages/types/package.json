@@ -1,0 +1,26 @@
+{
+  "name": "@lovefall/types",
+  "version": "1.0.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "pnpm run compile && tsc && pnpm run format && pnpm run remove-compiler",
+    "compile": "set NODE_ENV=rights_compile&& ts-node ./src/rights.compiler.ts",
+    "format": "prettier ./src/rights.type.ts -c -w",
+    "remove-compiler": "rimraf ./dist/rights.compiler.d.ts && rimraf ./dist/rights.compiler.js"
+  },
+  "author": {
+    "email": "love.laf.command@gmail.com",
+    "name": "Lazy-And-Focused",
+    "url": "https://laf-love.netlify.app"
+  },
+  "license": "MIT",
+  "description": "",
+  "devDependencies": {
+    "rimraf": "^6.0.1",
+    "fbit-field": "1.4.0-alpha.1c"
+  },
+  "dependencies": {
+    "mongoose": "^8.17.0"
+  }
+}
