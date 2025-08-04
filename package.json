@@ -1,0 +1,20 @@
+{
+  "name": "project-name",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "dotenv": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "ts-node": "catalog:",
+    "tsc-alias": "catalog:",
+    "tsconfig-paths": "catalog:",
+    "typescript": "catalog:"
+  }
+}
