@@ -2,7 +2,11 @@
   "name": "backend",
   "version": "0.0.1",
   "description": "",
-  "author": "",
+  "author": {
+    "email": "love.laf.command@gmail.com",
+    "name": "Lazy-And-Focused",
+    "url": "https://laf-team.ru"
+  },
   "license": "MIT",
   "keywords": [
     "nest",
