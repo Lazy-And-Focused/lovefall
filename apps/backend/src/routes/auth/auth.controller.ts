@@ -1,20 +1,22 @@
-import { Controller, Get, Injectable, Next, Req, Res } from "@nestjs/common";
-import { NextFunction, Request, Response } from "express";
+import type { Request, Response } from "express";
+import type { Cache } from "cache-manager";
 
-import * as Database from "database/index";
+import { Controller, Get, Inject, Injectable, Next, Req, Res } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
 
-import { AUTH_CONTROLLER, AUTH_ROUTES } from "./auth.routes";
+import { ROUTE, ROUTES } from "./auth.routes";
 
-import AuthApi from "api/auth.api";
-import Hash from "api/hash.api";
-import Env from "api/env";
-
-const { env } = new Env();
-const { User } = Database;
+import env from "services/env.service";
+import Hash from "services/hash.service";
+import AuthApi from "services/auth.service";
 
 @Injectable()
-@Controller(AUTH_CONTROLLER)
+@Controller(ROUTE)
 export class AuthController {
+  public constructor(
+    @Inject(CACHE_MANAGER) private cache: Cache
+  ) {}
+
   @Get()
   public printMethods() {
     const { abbreviations, methods } = AuthApi.methods;
@@ -27,58 +29,45 @@ export class AuthController {
     };
   }
 
-  @Get(AUTH_ROUTES.GET)
-  public auth(
+  @Get(ROUTES.GET)
+  public async auth(
     @Req() req: Request,
-    @Res() res: Response,
-    @Next() next: NextFunction
+    @Res() res: Response
   ) {
-    new AuthApi(req.params.method).auth(req, res, next);
+    const { method } = req.params;
+    
+    if (method === "@me") {
+      if (!req.query.code) return;
 
-    return;
+      try {
+        const data = await (await fetch(env.AUTH_URL + "/api/auth/" + method + "?code=" + req.query.code)).json();
+        
+        return res.send(data);
+      } catch (error) {
+        console.log(error);
+
+        return res.sendStatus(500);
+      }
+    };
+
+    const redirect = (req.query.callback?.toString() || req.hostname);
+    
+    res.cookie("redirect", redirect);
+
+    res.redirect(env.AUTH_URL + "/api/auth/" + method + "?callback=" + env.THIS_URL + "/api/auth/" + method + "/callback");
   }
 
-  @Get(AUTH_ROUTES.GET_CALLBACK)
-  public callback(
-    @Req() req: Request,
-    @Res() res: Response,
-    @Next() next: NextFunction
-  ) {
-    new AuthApi(req.params.method).callback(req, res, next, (...args) => {
-      if (!args[1]) return;
+  @Get(ROUTES.GET_CALLBACK)
+  public callback(@Req() req: Request, @Res() res: Response) {
+    const redirect = (req.cookies["redirect"] || req.hostname);
+    const code = req.query.code;
 
-      const { auth, user } = args[1];
+    console.log(redirect, code);
 
-      res.cookie(
-        "user",
-        JSON.stringify({
-          ...user
-        }),
-        {
-          maxAge: Number(env.COOKIE_MAX_AGE)
-        }
-      );
+    if (!code) {
+      return res.sendStatus(400);
+    }
 
-      res.cookie(
-        "auth-data",
-        JSON.stringify({
-          auth_id: auth.id,
-          profile_id: auth.profile_id
-        })
-      );
-
-      res.cookie(
-        `${auth.id}-${auth.profile_id}-token`,
-        JSON.stringify({
-          id: auth.id,
-          profile_id: auth.profile_id,
-          token: new Hash().execute(auth.access_token)
-        }),
-        {
-          maxAge: Number(env.COOKIE_MAX_AGE)
-        }
-      );
-      res.redirect(env.CLIENT_URL);
-    });
+    return res.redirect(redirect + "?code=" + code);
   }
 }

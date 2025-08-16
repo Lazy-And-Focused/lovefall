@@ -1,13 +1,25 @@
 import { Module, NestModule, MiddlewareConsumer } from "@nestjs/common";
-import { RouterModule } from "@nestjs/core";
-
 import { LoggerMiddleware } from "./middleware/logger.middleware";
-import { modules } from "./routes";
+import { APP_INTERCEPTOR, RouterModule } from "@nestjs/core";
+import { CacheModule, CacheInterceptor } from '@nestjs/cache-manager';
+
+import AuthModule from "./routes/auth/auth.module";
 
 @Module({
   imports: [
-    ...modules,
-    ...modules.map((module) => RouterModule.register([{ path: "api", module }]))
+    ...[
+      AuthModule,
+    ].flatMap((module) => [module, RouterModule.register([{ path: "api", module }])]),
+    CacheModule.register({
+      ttl: 5 * 60 * 1000, // 5 minutes
+      isGlobal: true
+    })
+  ],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: CacheInterceptor
+    }
   ]
 })
 export class AppModule implements NestModule {

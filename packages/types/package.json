@@ -2,7 +2,7 @@
   "name": "@lovefall/types",
   "version": "1.0.0",
   "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "@lovefall/types": "./dist/index.d.ts",
   "scripts": {
     "build": "pnpm run compile && tsc && pnpm run format && pnpm run remove-compiler",
     "compile": "set NODE_ENV=rights_compile&& ts-node ./src/rights.compiler.ts",

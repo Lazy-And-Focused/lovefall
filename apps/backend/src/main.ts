@@ -1,36 +1,37 @@
-import connect from "database/index";
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { NestFactory } from "@nestjs/core";
+
+import { json, urlencoded } from "express";
 
 import cookieParser = require("cookie-parser");
 
-import { json, urlencoded } from "express";
-import { NestFactory } from "@nestjs/core";
-
-import Env from "api/env";
-
-import { AppModule } from "./app.module";
-import Passport from "./strategies";
 import Session from "./app/session.app";
 
-const env = new Env();
-const passport = new Passport();
+import { AppModule } from "./app.module";
+import { env } from "services/env.service";;
 
-async function bootstrap() {
-  connect(env.env.MONGO_URL).then(() => console.log("MongoDB connected"));
+(async () => {
+  // await connect(env.DATABASE_URL);
 
   const app = await NestFactory.create(AppModule, {
-    cors: { origin: [env.env.CLIENT_URL], credentials: true }
+    cors: { origin: [env.CLIENT_URL], credentials: true }
   });
 
-  new Session(app).create();
+  new Session(env.SESSION_SECRET, app).create();
 
   app.use(cookieParser());
   app.use(json());
   app.use(urlencoded());
 
-  app.use(passport.session());
-  app.use(passport.initialize());
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('API documentation')
+    .setDescription('API documentation')
+    .setVersion('1.0')
+    .addTag('api')
+    .build();
 
-  await app.listen(env.env.PORT);
-}
+  const documentFactory = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api/docs', app, documentFactory);
 
-bootstrap();
+  await app.listen(env.PORT);
+})();
